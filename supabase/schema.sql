@@ -22,15 +22,19 @@ begin
  if client_hash !~ '^[0-9a-f]{64}$' then return false; end if;
  delete from portfolio_private.request_budgets where expires_at < now();
  insert into portfolio_private.request_budgets as b(bucket, requests, expires_at)
- values ('global:' || day_start::text, 1, day_start + interval '1 day')
- on conflict (bucket) do update set requests=b.requests+1 where b.requests < 300
- returning requests into total;
- if total is null then return false; end if;
+ values ('global:' || day_start::text, 0, day_start + interval '1 day')
+ on conflict (bucket) do nothing;
+ select requests into total from portfolio_private.request_budgets
+ where bucket='global:' || day_start::text for update;
+ if total >= 300 then return false; end if;
  insert into portfolio_private.request_budgets as b(bucket, requests, expires_at)
  values ('client:' || client_hash || ':' || hour_start::text, 1, hour_start + interval '1 hour')
  on conflict (bucket) do update set requests=b.requests+1 where b.requests < 10
  returning requests into personal;
- return personal is not null;
+ if personal is null then return false; end if;
+ update portfolio_private.request_budgets set requests=requests+1
+ where bucket='global:' || day_start::text;
+ return true;
 end;
 $$;
 revoke all on function public.consume_portfolio_budget(text) from public, anon, authenticated;
