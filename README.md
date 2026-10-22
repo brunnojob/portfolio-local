@@ -1,72 +1,55 @@
-# Forma Resume Studio
+# Forma — Portfolio Maker
 
-A free, open source resume and portfolio editor that runs in the browser. No account, subscriptions, API keys, token credits, backend or document uploads to a server.
+[Open the editor](https://brunnojob.github.io/portfolio-maker/) · [Abrir o editor](https://brunnojob.github.io/portfolio-maker/)
 
-[Open Forma](https://brunnojob.github.io/portfolio-local/)
+Free, open-source resume and portfolio editor in Portuguese and English. No account, watermark or download paywall. Neutral gray interface. Documents stay in the browser unless you explicitly request AI assistance.
 
-## Editor
+## What you can do
 
-- Dark workspace with a searchable gallery of 12 templates: Editorial, Essencial ATS, Studio, Executivo, Lateral, Minimal, Horizonte, Técnico, Trajetória, Atelier, Acadêmico and Compacto.
-- Single column, sidebar and two column layouts. Templates affect the actual exported documents.
-- Twelve color palettes, custom accent and text colors, three font families, font size, line spacing, page margins and A4/Letter formats.
-- Live preview rendered from the generated PDF. The PDF download uses the same rendering engine and document settings.
-- PDF with selectable text, editable DOCX, standalone HTML portfolio and JSON backup downloads. No watermark or download paywall.
-- Separate Portuguese and English content versions and interface labels.
-- Profile, work experience, education, skills, certifications, languages, projects and extra information.
-- Reorder and hide standard sections. Add up to ten custom sections. Undo and redo editing changes.
-- Optional photo, cropped and compressed locally.
-- Local field outlines and review suggestions for IT, offshore, engineering, business, healthcare, education, creative work, sales and general careers.
-- A guided assistant that checks the current document, prioritizes missing details, answers common portfolio questions in Portuguese or English and opens the relevant editor field. Questions and replies stay in the current browser tab. Its guidance is based on local rules, not a remote AI model.
-- Optional job-description keyword comparison. This is a literal local text check, not an ATS score or hiring prediction.
+- Import PDF, DOCX or TXT, review the extracted text and continue editing. Scanned PDFs require external OCR. Limits: 15 MB / 60 PDF pages.
+- Start from scratch with 12 portfolio outlines: development, UX/design, data, writing, photography/video, research, freelance services, first opportunity, career transition, engineering, business, and general professional work.
+- Choose among 20 resume templates, 13 palettes, A4/Letter, fonts, spacing, optional photo and custom sections. Every template exports real selectable-text PDF and editable DOCX.
+- Export a standalone responsive portfolio website in four layouts: cards, editorial, side profile or essential. Project entries separated by a blank line become separate cards. Photography uses gallery links rather than uploading an image collection.
+- Keep separate PT/EN versions; optional local translation downloads its model only when requested. Browser translation availability varies.
+- Autosave, multiple documents, duplication, backups, recovery, undo/redo and section visibility/order.
 
-## Import
+## AI assistant
 
-Import PDF, DOCX or TXT, review the extracted text, then open it as a new document or replace the current version. Common section headings and a short professional role line are recognized heuristically; review the fields after import.
+Choose **Assistente → Usar inteligência artificial**, consent to the text transfer, then ask for a review, clearer writing, project case studies, career advice, or adaptation to a job pasted in Review. The assistant sees active text fields, the question, up to four previous messages and the job description. It helps with imported and newly created portfolios.
 
-The original document layout is not retained. Scanned PDFs need external OCR. Password-protected or malformed documents may not be readable. Imports are limited to 15 MB, PDFs to 60 pages and photos to 8 MB.
+Responses include advice and up to three proposed field replacements. Review the proposed text and apply each change explicitly. Undo restores the previous content. Suggestions are tied to the document and language used for the request; changing a field meanwhile asks before replacement. Unknown facts should remain questions or bracketed placeholders, never fabricated credentials or achievements. AI can make mistakes: verify every suggestion.
 
-PDF and DOCX importers load with the application instead of relying on a delayed importer chunk. Deployment asset failures have a save-and-reload recovery flow. Existing tabs may need one refresh after an update.
+Local guidance remains available without OpenAI. It is labeled separately and never presented as an AI response.
 
-## Local persistence
+### Privacy and costs
 
-Documents are stored in IndexedDB, with an immediate localStorage recovery copy of the active document. The active draft is also saved when the page is hidden or closed. Normal browser restarts retain stored documents.
+Contact fields, name, photo, custom sections and the inactive language are omitted automatically. Emails and phone-like numbers in text are redacted on the client, but this is not complete anonymization: review names and other personal information inside free text before sending. Browser content goes to the API hosted on Vercel, then OpenAI. The backend does not log portfolio text or questions; it logs only provider error status/code/type. Requests use `store: false`; provider retention policies still apply. Chat is kept in memory, not autosaved.
 
-The My CVs panel supports multiple documents, duplication and recovery of removed documents. Previous drafts from the first version are migrated without clearing their text.
+Visitors do not need a key or payment. **OpenAI usage is billed to the project owner**, and hosting has plan quotas. This does not promise unlimited free AI. The backend has bounded input/output, a 45-second provider timeout and a best-effort 5-request/hour/IP limit held in each function instance. It resets with instances and is not a distributed spending ceiling. CORS is an origin restriction for browsers, not authentication. For a large public launch, configure provider project limits and a shared rate limiter or challenge before increasing traffic.
 
-The storage dialog can request persistent storage from browsers that support it. The browser decides whether to grant that request. Private browsing, browser policies, clearing site data, changing profiles and device changes can remove or separate stored data. Export JSON backups to keep independent copies. Storage is not encrypted and is scoped to the hosting origin; other software on the same origin can access it.
-
-## What stays manual
-
-Portuguese and English versions remain independent. Switching languages translates missing fields on the device when the browser supports the Translator API. Chrome desktop supports this API and may download a language pack on first use. When that API is unavailable, the editor offers an optional local translation model downloaded from Hugging Face (roughly 120 MB per direction). Translation runs in the browser; resume text is not sent to the model host. The target version remains editable and shows an explicit empty state until translation succeeds. Review all translated text, especially names, titles, dates and links. Suggestions use local rules and do not generate credentials or experience.
-
-Start in **Assistant** to follow the next steps or ask about a profile, project, experience, English version, template or job description. Its answers provide writing structure and editing shortcuts; they do not fact-check claims or generate a finished resume. Switch languages to translate missing fields when supported, or write the other version manually before exporting it.
-
-Word uses the selected typography, color and layout structure, but its pagination depends on the Word processor. The browser preview is exact for the PDF, not for every Word application. PDF fonts support Portuguese and English; unsupported scripts and symbols may require a different export workflow.
-
-The HTML portfolio is a standalone web presentation using the same content, color and template family, with clickable project URLs. It is separate from the PDF document preview.
-
-## Development
-
-Node.js 22 or later.
+## Run and verify
 
 ```sh
 npm ci
-npm run dev
-```
-
-```sh
 npm test
+npm run dev
 npm run build
 ```
 
-Production files are written to `dist/`. Document libraries and the PDF worker are bundled locally. There are no trackers, analytics or remote document-processing endpoints. The browser contacts the static host for app assets. Translation can download a browser language pack or, with an explicit click, model files from Hugging Face. The model is cached by the browser for later use.
+Node 22+. Tests cover all templates in PDF/DOCX, import, backup recovery, translation, portfolio outlines, HTML escaping, AI payload minimization, response validation and backend request restrictions.
 
-Tests cover the actual PDF parser, PDF/DOCX content across all templates, multipage column layouts, section ordering and visibility, safe HTML output, local draft migration, storage reopen, document recovery and outdated deployment errors.
+## Deploy
 
-## GitHub Pages
+`.github/workflows/pages.yml` tests/builds and publishes `dist` to GitHub Pages on main. No API secret is included in Pages or the Vite bundle.
 
-In Settings → Pages → Build and deployment, select GitHub Actions. Push to `main`. The workflow installs locked dependencies, runs tests, builds and deploys `dist/` using GitHub's automatic deployment credentials. No visitor credentials or user-provided secrets are needed. Relative asset paths support repository subdirectories.
+Pages cannot run a server. `backend/` is a separate Vercel Node function, deployed at `https://portfolio-maker-assistant.vercel.app/api/assistant`. Deploy that directory when changing backend code. Its project settings are at [Vercel](https://vercel.com/brunnojobs-projects/portfolio-maker-assistant/settings/environment-variables).
 
-## License
+Server variables (see `backend/.env.example`):
 
-MIT. Dependencies retain their respective licenses.
+- `OPENAI_API_KEY`: sensitive production secret. Rotate any key shared in a chat or source file. Never use a `VITE_` variable for a secret.
+- `OPENAI_MODEL`: defaults to `gpt-5-mini`; choose a Responses API model supporting Structured Outputs and the configured reasoning effort.
+- `ALLOWED_ORIGINS`: comma-separated exact origins; defaults to `https://brunnojob.github.io`. No wildcard CORS.
+
+The browser endpoint is public configuration in `src/ai.js`. Change it if hosting your own backend. Provider quota, authentication or availability errors are shown without losing the document. AI requires an active funded OpenAI project; code deployment alone cannot supply credits.
+
+MIT license.

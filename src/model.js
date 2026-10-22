@@ -15,7 +15,7 @@ export const sectors = {
  education: ['Educação / pesquisa','Education / research','Destaque disciplinas, metodologias, pesquisa e publicações. Inclua links e resultados verificáveis.', 'Highlight subjects, methods, research and publications. Include links and verifiable results.'],
  services: ['Comércio / serviços','Sales / services','Mostre atendimento, organização, ferramentas e metas atingidas com dados reais.', 'Show customer service, organization, tools and targets achieved with real data.']
 };
-export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,sector:'general',template:'editorial',lang:'pt',accent:'#153d35',ink:'#273443',font:'auto',fontSize:10.5,lineHeight:1.45,margin:18,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
+export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,portfolioType:'general',webLayout:'cards',sector:'general',template:'editorial',lang:'pt',accent:'#454545',ink:'#292929',font:'auto',fontSize:10.5,lineHeight:1.45,margin:18,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
 const cleanImportedHeader=value=>value.replace(/^(.+?)\s+\|\s+(?:curr[ií]culo(?:\s+profissional)?|resume|cv)(?:\s+\|\s*\d+)?$/i,'$1');
 export function validate(data) {
  if (!data || data.version!==1 || !data.pt || !data.en) throw Error('Backup inválido / Invalid backup');
@@ -27,6 +27,8 @@ export function validate(data) {
  out.showPhoto=!!data.showPhoto;
  if(sectors[data.sector]) out.sector=data.sector;
  if(templates.some(t=>t.id===data.template)) out.template=data.template;
+ if(['general','developer','designer','data','writer','photographer','academic','freelancer','first-job','career-change','engineering','business'].includes(data.portfolioType))out.portfolioType=data.portfolioType;
+ if(['cards','editorial','split','minimal'].includes(data.webLayout))out.webLayout=data.webLayout;
  if(data.lang==='en') out.lang='en';
  if(/^#[0-9a-f]{6}$/i.test(data.accent)) out.accent=data.accent;
  if(/^#[0-9a-f]{6}$/i.test(data.ink))out.ink=data.ink;

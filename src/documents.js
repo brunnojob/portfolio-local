@@ -39,10 +39,12 @@ export function makePdf(data){
  const bottom=ph-20;
  function flow(content,x,width){pdf.setPage(1);let pageIndex=0,cursor=start;
   const next=()=>{pageIndex++;if(pageIndex>=pdf.getNumberOfPages())initialize(pageIndex);else pdf.setPage(pageIndex+1);cursor=27;};
-  for(const section of content){
+  for(const [sectionIndex,section] of content.entries()){
    if(cursor+16+line*2>bottom)next();
    pdf.setTextColor(accent);pdf.setFont(font,'bold');pdf.setFontSize(size+1);
-   const heading=section.title||'';
+   const heading=(template.sectionStyle==='numbered'?String(sectionIndex+1).padStart(2,'0')+'  ':'')+(section.title||'');
+   if(template.sectionStyle==='block'){pdf.setFillColor(tint(accent,.88));pdf.rect(x-1,cursor-4,width+2,7,'F');}
+   if(template.sectionStyle==='rule'){pdf.setDrawColor(accent);pdf.setLineWidth(.4);pdf.line(x,cursor+2,x+width,cursor+2);}
    if(template.id==='timeline'){pdf.setFillColor(accent);pdf.circle(x-3,cursor-1,1,'F');}
    if(template.id==='modern'||template.id==='technical'){pdf.setFillColor(tint(accent,.91));pdf.rect(x-1,cursor-4,width+2,7,'F');}
    const heads=pdf.splitTextToSize(heading,width);
