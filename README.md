@@ -1,55 +1,77 @@
 # Forma — Portfolio Maker
 
-[Open the editor](https://brunnojob.github.io/portfolio-maker/) · [Abrir o editor](https://brunnojob.github.io/portfolio-maker/)
+[Open editor / Abrir editor](https://brunnojob.github.io/portfolio-maker/)
 
-Free, open-source resume and portfolio editor in Portuguese and English. No account, watermark or download paywall. Neutral gray interface. Documents stay in the browser unless you explicitly request AI assistance.
+Free portfolio and resume studio in Brazilian Portuguese and English. GitHub Pages serves the frontend; Supabase Edge Functions runs the OpenAI assistant, and Postgres enforces shared usage limits. No account, watermark or download paywall.
 
-## What you can do
+## Create and export
 
-- Import PDF, DOCX or TXT, review the extracted text and continue editing. Scanned PDFs require external OCR. Limits: 15 MB / 60 PDF pages.
-- Start from scratch with 12 portfolio outlines: development, UX/design, data, writing, photography/video, research, freelance services, first opportunity, career transition, engineering, business, and general professional work.
-- Choose among 20 resume templates, 13 palettes, A4/Letter, fonts, spacing, optional photo and custom sections. Every template exports real selectable-text PDF and editable DOCX.
-- Export a standalone responsive portfolio website in four layouts: cards, editorial, side profile or essential. Project entries separated by a blank line become separate cards. Photography uses gallery links rather than uploading an image collection.
-- Keep separate PT/EN versions; optional local translation downloads its model only when requested. Browser translation availability varies.
-- Autosave, multiple documents, duplication, backups, recovery, undo/redo and section visibility/order.
+- Import PDF, DOCX or TXT locally; review the extracted text before applying it. Limit: 15 MB / 60 PDF pages. Scanned PDFs need external OCR.
+- Start from scratch with 12 professional outlines, including development, design, data, creative work, research, engineering, business and first opportunities.
+- Choose 20 document templates, 13 color palettes, dark/light editor theme, fonts, margins, A4/Letter, photo and custom sections.
+- Export selectable-text PDF, editable Word DOCX, a standalone portfolio website in four layouts, or a complete JSON backup.
+- Keep separate Portuguese and English versions. Changing language translates every UI label immediately. Missing content can be translated by the browser, the optional local model, or OpenAI after consent. Existing authored translations are preserved.
+- Manage multiple documents, undo/redo, section order and visibility during the current tab session.
 
-## AI assistant
+## Temporary session
 
-Choose **Assistente → Usar inteligência artificial**, consent to the text transfer, then ask for a review, clearer writing, project case studies, career advice, or adaptation to a job pasted in Review. The assistant sees active text fields, the question, up to four previous messages and the job description. It helps with imported and newly created portfolios.
+Documents use `sessionStorage`, not permanent local storage or a cloud document database. Reloading the same tab keeps drafts; closing it normally ends that session. Browser session restoration can restore sessionStorage, so **Clear session** explicitly erases it. Download before closing. If sessionStorage is unavailable or full, edits remain in memory and the save indicator explains that reloading will lose them.
 
-Responses include advice and up to three proposed field replacements. Review the proposed text and apply each change explicitly. Undo restores the previous content. Suggestions are tied to the document and language used for the request; changing a field meanwhile asks before replacement. Unknown facts should remain questions or bracketed placeholders, never fabricated credentials or achievements. AI can make mistakes: verify every suggestion.
+The new version removes this application's older persistent drafts from localStorage and IndexedDB. Export anything needed from the older version before upgrading. Other applications' data is untouched.
 
-Local guidance remains available without OpenAI. It is labeled separately and never presented as an AI response.
+## OpenAI assistant
 
-### Privacy and costs
+Enable AI and consent to the text transfer in Assistant. Ask for a complete outline, improvements to an import, writing help, job adaptation, template/color recommendations, translation, or guidance using the editor. The assistant can answer general questions within its capabilities; it cannot guarantee correctness or perform external actions.
 
-Contact fields, name, photo, custom sections and the inactive language are omitted automatically. Emails and phone-like numbers in text are redacted on the client, but this is not complete anonymization: review names and other personal information inside free text before sending. Browser content goes to the API hosted on Vercel, then OpenAI. The backend does not log portfolio text or questions; it logs only provider error status/code/type. Requests use `store: false`; provider retention policies still apply. Chat is kept in memory, not autosaved.
+Responses contain advice, up to nine proposed replacement fields and optional template, palette and website-layout changes. Review and apply proposals explicitly; undo restores prior edits. Stale proposals ask before overwriting newer text or design. Missing facts remain questions or placeholders rather than fabricated qualifications.
 
-Visitors do not need a key or payment. **OpenAI usage is billed to the project owner**, and hosting has plan quotas. This does not promise unlimited free AI. The backend has bounded input/output, a 45-second provider timeout and a best-effort 5-request/hour/IP limit held in each function instance. It resets with instances and is not a distributed spending ceiling. CORS is an origin restriction for browsers, not authentication. For a large public launch, configure provider project limits and a shared rate limiter or challenge before increasing traffic.
+Name, contact fields, photos, custom sections and the inactive language are omitted from advice requests. Emails and phone-like strings in free text are redacted as a best effort. AI translation explicitly sends the missing fields, including custom sections, for translation; review personal information before consenting. Local import, editing and export do not send document files to the backend.
+
+The backend sends bounded text to the OpenAI Responses API with Structured Outputs and `store: false`. It does not save documents or chat in Postgres or log request content. Provider/platform retention policies still apply. The database stores only expiring counters with daily rotating HMAC client identifiers, never raw IP addresses or document text. Infrastructure providers may keep their own operational logs.
+
+Visitors do not need an API key. OpenAI usage is paid by the project owner; GitHub Pro/Developer benefits do not themselves fund OpenAI API requests. The shared limiter allows 10 requests per client/hour and at most 300 requests across the project per UTC day. Failed provider requests consume a slot too. CORS is not authentication; limits bound request count, not dollar spending. Configure OpenAI project budgets and monitor actual usage.
 
 ## Run and verify
 
+Node 22 or later:
+
 ```sh
-npm ci
+npm ci --ignore-scripts
 npm test
 npm run dev
 npm run build
 ```
 
-Node 22+. Tests cover all templates in PDF/DOCX, import, backup recovery, translation, portfolio outlines, HTML escaping, AI payload minimization, response validation and backend request restrictions.
+The browser translator uses the web WASM runtime; native ONNX install scripts are unnecessary. Tests cover PDF/DOCX content and all templates, import parsing, bilingual editing, temporary sessions, privacy, translation completeness, design validation, provider errors and limiter failure handling.
 
-## Deploy
+## GitHub Pages
 
-`.github/workflows/pages.yml` tests/builds and publishes `dist` to GitHub Pages on main. No API secret is included in Pages or the Vite bundle.
+`.github/workflows/pages.yml` runs tests and the production build, then deploys `dist` on each push to `main`. In repository Settings → Pages, select **GitHub Actions** as the source if it is not already selected. Relative asset URLs support the `/portfolio-maker/` project path.
 
-Pages cannot run a server. `backend/` is a separate Vercel Node function, deployed at `https://portfolio-maker-assistant.vercel.app/api/assistant`. Deploy that directory when changing backend code. Its project settings are at [Vercel](https://vercel.com/brunnojobs-projects/portfolio-maker-assistant/settings/environment-variables).
+No OpenAI key or Supabase service-role key belongs in the repository, frontend variables or Pages bundle. The public function URL is configured in `src/ai.js`.
 
-Server variables (see `backend/.env.example`):
+## Supabase backend
 
-- `OPENAI_API_KEY`: sensitive production secret. Rotate any key shared in a chat or source file. Never use a `VITE_` variable for a secret.
-- `OPENAI_MODEL`: defaults to `gpt-5-mini`; choose a Responses API model supporting Structured Outputs and the configured reasoning effort.
-- `ALLOWED_ORIGINS`: comma-separated exact origins; defaults to `https://brunnojob.github.io`. No wildcard CORS.
+Project reference: `cdkbobyevlwxofvcoxcc`.
 
-The browser endpoint is public configuration in `src/ai.js`. Change it if hosting your own backend. Provider quota, authentication or availability errors are shown without losing the document. AI requires an active funded OpenAI project; code deployment alone cannot supply credits.
+1. Run `supabase/schema.sql` in the project's SQL Editor for a new installation. It creates a private rate-limit table with RLS and a service-role-only RPC. No document table or visitor login is needed. The SQL is repeatable.
+2. In [Edge Function secrets](https://supabase.com/dashboard/project/cdkbobyevlwxofvcoxcc/functions/secrets), add **OPENAI_API_KEY**. Optionally add `OPENAI_MODEL` (default `gpt-5-mini`) and `ALLOWED_ORIGINS` (default `https://brunnojob.github.io`). Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the function automatically. Never publish their values.
+3. Deploy `supabase/functions/portfolio-assistant/index.ts` with its `core.js` and `catalog.js` dependencies. `supabase/config.toml` deliberately disables JWT verification for this public, login-free endpoint. Input validation and the server-only database limiter remain mandatory.
+4. Verify the deployed endpoint:
+
+```sh
+curl -H 'Origin: https://brunnojob.github.io' \
+  https://cdkbobyevlwxofvcoxcc.supabase.co/functions/v1/portfolio-assistant
+```
+
+Expected: `{"configured":true}` after setting the secret. No secret values are returned. OPTIONS supports browser preflight; unapproved origins are rejected. Database failures fail closed before contacting OpenAI.
+
+A missing key is shown as setup pending, not a successful AI response. End-to-end OpenAI testing requires the owner's funded key. Local guidance, document creation, templates, import and downloads work without it.
+
+## Português
+
+Editor gratuito, sem cadastro. Importe ou crie do zero, personalize modelos e cores e baixe PDF, DOCX ou HTML. Os rascunhos ficam somente na sessão da aba; baixe antes de fechar. A interface muda integralmente entre português e inglês. A tradução de conteúdo usa IA autorizada ou tradução local, preservando o original.
+
+O assistente já tem integração com a Supabase. Para ativar as respostas reais, cadastre `OPENAI_API_KEY` somente nos segredos da Edge Function pelo link acima. O consumo da API é cobrado do proprietário. Nenhuma chave deve ser enviada ao frontend ou adicionada ao GitHub.
 
 MIT license.

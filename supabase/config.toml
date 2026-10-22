@@ -1,0 +1,4 @@
+project_id = "portfolio-maker"
+
+[functions.portfolio-assistant]
+verify_jwt = false

@@ -29,3 +29,17 @@
 .ai-controls,.portfolio-setup{border:1px solid #424242;background:#252525;border-radius:10px;padding:14px;margin:18px 0}.ai-controls strong{font-size:12px}.ai-controls .check{margin-bottom:8px}.ai-controls .small-note{margin-bottom:0}.quick-prompts{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.quick-prompts button{font-size:10px;padding:7px 9px}.ai-proposal{border:1px solid #565656;padding:12px;border-radius:8px;margin:12px 0;background:#242424}.ai-proposal pre{white-space:pre-wrap;font:inherit;line-height:1.7;color:#ddd;max-height:240px;overflow:auto;font-size:11px}.ai-proposal button{font-size:10px}.assistant-chat{max-height:470px}.assistant-message p{white-space:pre-wrap}.portfolio-setup label{font-size:11px}.portfolio-setup select{margin-top:9px}.portfolio-setup .primary{margin-top:12px;width:100%}.ai-status{display:block;margin-top:8px;font-size:10px;color:#bababa}.welcome{padding-top:22px;padding-bottom:22px}.welcome h1{font-size:26px}.welcome-note .spark{display:none}.canvas-scroll{background-image:none}.studio-shell{min-height:720px}.assistant-form input{min-width:0}.assistant-form button{flex-shrink:0}
 
 .local-checklist{padding:12px 0;border-bottom:1px solid #3a3a3a;font-size:11px;color:#ccc}.local-checklist summary,.portfolio-setup summary{cursor:pointer}.assistant-form{margin-bottom:10px}
+
+:root[data-theme="light"]{color-scheme:light;color:#252936;background:#f5f6f8;--surface:#fff;--border:#d9dce3;--muted:#626b7a;--brand:#454e68}
+:root[data-theme="light"] :is(.app-header,.inspector,.tool-rail,.canvas-toolbar,.canvas-subtoolbar,.canvas-footer,.app-footer,dialog){background:#fff;color:#252936;border-color:#d9dce3}
+:root[data-theme="light"] :is(input,select,textarea){background:#fff;color:#252936;border-color:#c6cbd6}
+:root[data-theme="light"] button{background:#f3f4f7;color:#303849;border-color:#d2d7e0}
+:root[data-theme="light"] button:hover{background:#e4e7ee}
+:root[data-theme="light"] button.primary{background:#303b53;color:#fff;border-color:#303b53}
+:root[data-theme="light"] :is(.assistant-intro,.assistant-message,.ai-controls,.ai-proposal,.portfolio-setup,.version-empty,.completion-card,.review-tip,.panel-tip,.document-card){background:#f6f7fa;border-color:#d5dae4;color:#303849}
+:root[data-theme="light"] :is(.assistant-message p,.assistant-message strong,.assistant-intro p,.assistant-intro strong,.ai-proposal pre,.ai-status,.local-checklist,.version-empty h2,.version-empty p,.version-empty small,.small-note,.panel-heading p,.welcome p,.control-title,.field,.check,.palette small,.template-caption,.document-card small){color:#4b5568}
+:root[data-theme="light"] .canvas-scroll{background:#e6e9ef}
+:root[data-theme="light"] .assistant-message.user{background:#e7edf8}
+:root[data-theme="light"] .rail-button.active{background:#e4e9f3;color:#253553}
+:root[data-theme="light"] .welcome h1{color:#252936}
+:root[data-theme="light"] .document-name input{background:transparent}

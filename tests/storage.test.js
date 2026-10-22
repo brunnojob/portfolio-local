@@ -1,21 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import 'fake-indexeddb/auto';
 import {blank} from '../src/model.js';
-import {saveDocument,restoreSession,listDocuments,loadDocument,removeDocument,recoverDocuments,database,legacyKey} from '../src/storage.js';
 const values=new Map();
-globalThis.localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k),clear:()=>values.clear()};
-test('documents survive a closed database connection and a fresh app module',async()=>{
- const d=blank();d.id='persistence-test';d.name='Ana Silva';d.pt.summary='Rascunho durável';d.template='sidebar';d.accent='#176b94';
- await saveDocument(d);const db=await database();db.close();
- const reopened=await import('../src/storage.js?reopened');
- const restored=await reopened.restoreSession();assert.equal(restored.name,'Ana Silva');assert.equal(restored.pt.summary,'Rascunho durável');assert.equal(restored.template,'sidebar');
- localStorage.clear();const fromDb=await reopened.restoreSession();assert.equal(fromDb.name,'Ana Silva');assert.equal(fromDb.accent,'#176b94');
- const copy={...fromDb,id:'copy-test',projectName:'Segunda vaga'};await reopened.saveDocument(copy);
- assert.equal((await reopened.listDocuments()).length,2);assert.equal((await reopened.loadDocument('persistence-test')).pt.summary,'Rascunho durável');
- await reopened.removeDocument('persistence-test');assert.equal((await reopened.listDocuments()).length,1);await reopened.recoverDocuments();assert.equal((await reopened.listDocuments()).length,2);
+globalThis.sessionStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k),clear:()=>values.clear()};
+globalThis.localStorage={removeItem(){},getItem(){throw Error('Persistent drafts must not be read');},setItem(){throw Error('Persistent drafts must not be written');}};
+test('session survives reload, supports multiple documents, and ends with the tab',async()=>{
+ const storage=await import('../src/storage.js');
+ const d=blank();d.id='temporary';d.pt.summary='Sessão temporária';d.en.summary='Temporary session';
+ await storage.saveDocument(d);
+ const reloaded=await import('../src/storage.js?reload');
+ assert.equal((await reloaded.restoreSession()).en.summary,'Temporary session');
+ await reloaded.saveDocument({...d,id:'copy'});
+ assert.equal((await reloaded.listDocuments()).length,2);
+ await reloaded.removeDocument('temporary');assert.equal((await reloaded.listDocuments()).length,1);
+ await reloaded.recoverDocuments();assert.equal((await reloaded.listDocuments()).length,2);
+ sessionStorage.clear();
+ const newTab=await import('../src/storage.js?newtab');
+ assert.equal((await newTab.restoreSession()).pt.summary,'');
+ assert.equal((await newTab.listDocuments()).length,0);
 });
-test('legacy local draft content is migrated without losing bilingual text',async()=>{
- const d=blank();d.pt.summary='Perfil antigo';d.en.summary='Previous profile';d.updatedAt=Date.now()+10000;localStorage.setItem(legacyKey,JSON.stringify(d));
- const isolated=await import('../src/storage.js?legacy');const restored=await isolated.restoreSession();assert.equal(restored.pt.summary,'Perfil antigo');assert.equal(restored.en.summary,'Previous profile');assert.ok(restored.id);
+test('storage denial keeps current edits in memory without resurrecting stale session data',async()=>{
+ const store=await import('../src/storage.js?denied');
+ const original=globalThis.sessionStorage;
+ const d=blank();d.id='denied';
+ await store.saveDocument(d);
+ sessionStorage={...original,setItem(){throw Error('QuotaExceededError');}};
+ d.pt.summary='Newest text';
+ try{const result=await store.saveDocument(d);assert.equal(result.local,false);assert.equal((await store.restoreSession()).pt.summary,'Newest text');store.clearSession();assert.equal((await store.listDocuments()).length,0);}finally{globalThis.sessionStorage=original;}
 });
