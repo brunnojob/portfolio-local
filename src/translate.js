@@ -56,3 +56,8 @@ export async function translateMissing(document,source,target,{Translator=global
   return translated;
  }finally{translator.destroy?.();}
 }
+
+export async function translateWithFallback(document,source,target,{primary,fallback,onFallback=()=>{},...options}={}){
+ try{return await translateMissing(document,source,target,{...options,Translator:primary});}
+ catch(error){if(!fallback)throw error;onFallback();return translateMissing(document,source,target,{...options,Translator:fallback,chunkSize:400});}
+}

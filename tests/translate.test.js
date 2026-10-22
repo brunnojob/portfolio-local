@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blank,parseText,validate} from '../src/model.js';
-import {translationEntries,translateMissing,applyTranslations} from '../src/translate.js';
+import {translationEntries,translateMissing,translateWithFallback,applyTranslations} from '../src/translate.js';
 import {modelTranslator} from '../src/model-translator.js';
 
 test('fills only missing language fields and preserves authored text',async()=>{
@@ -83,3 +83,11 @@ test('chunking preserves paragraphs and URLs without injecting new paragraph bre
  const result=await translateMissing(document,'pt','en',{Translator,chunkSize:22});
  assert.equal(result[0].text.split('\n').length,3);assert.match(result[0].text,/https:\/\/example.com\/meu-projeto contato@example.com$/);assert.ok(calls.every(text=>!text.includes('https://')&&!text.includes('@')));
 });
+
+ test('native translator failure automatically uses the local provider without changing the document',async()=>{
+  const document=blank();document.pt.summary='Criei ferramentas.';const calls=[];
+  const primary={async create(){calls.push('native');const error=Error('Unsupported language');error.code=9;throw error;}};
+  const fallback={async create(){calls.push('local');return {async translate(){return 'I built tools.';},destroy(){calls.push('destroy');}};}};
+  const translated=await translateWithFallback(document,'pt','en',{primary,fallback,onFallback:()=>calls.push('fallback')});
+  assert.deepEqual(calls,['native','fallback','local','destroy']);assert.equal(document.en.summary,'');applyTranslations(document,'en',translated);assert.equal(document.en.summary,'I built tools.');
+ });

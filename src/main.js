@@ -6,7 +6,7 @@ import {portfolioHtml,webLayouts} from './portfolio.js';
 import './portfolio.css';
 import {createId} from './id.js';
 import {assistantPlan,assistantLabel} from './assistant.js';
-import {translationEntries,translateMissing,applyTranslations} from './translate.js';
+import {translationEntries,translateWithFallback,applyTranslations} from './translate.js';
 import {modelTranslator} from './model-translator.js';
 import './style.css';
 import './resume.css';
@@ -209,10 +209,10 @@ async function translateInto(target,source,useModel=false,overwrite=false){
  if(!useModel&&!globalThis.Translator?.create&&!(aiEnabled&&aiConsent)){useModel=true;toast(tr('Preparando o tradutor local. O primeiro uso baixa os arquivos de idioma.','Preparing the local translator. First use downloads language files.'));}
  translationBusy=true;
  const button=$('#language');if(button)button.disabled=true;
- const id=state.id;
+ const id=state.id,usingAI=!useModel&&aiEnabled&&aiConsent;
  try{
-  const provider=useModel?modelTranslator({onProgress:event=>{if(event.status==='progress'&&Number.isFinite(event.progress))toast(tr(`Baixando modelo: ${Math.round(event.progress)}%`,`Downloading model: ${Math.round(event.progress)}%`));}}):globalThis.Translator;
-  const translated=(!useModel&&aiEnabled&&aiConsent)?await translateWithAI(entries,target):await translateMissing(snapshot,source,target,{Translator:provider,chunkSize:useModel?400:3000,overwrite,onProgress:progress=>{
+  const local=modelTranslator({onProgress:event=>{if(event.status==='progress'&&Number.isFinite(event.progress))toast(tr(`Baixando modelo: ${Math.round(event.progress)}%`,`Downloading model: ${Math.round(event.progress)}%`));}});
+  const translated=usingAI?await translateWithAI(entries,target):await translateWithFallback(snapshot,source,target,{primary:useModel?local:globalThis.Translator,fallback:useModel?undefined:local,onFallback:()=>{useModel=true;toast(tr('Tradução nativa indisponível. Usando o tradutor local…','Native translation unavailable. Using the local translator…'));},chunkSize:useModel?400:3000,overwrite,onProgress:progress=>{
    if('download' in progress)toast(tr(`Baixando pacote de idioma: ${progress.download}%`,`Downloading language pack: ${progress.download}%`));
    else toast(tr(`Traduzindo ${progress.done} de ${progress.total} campos…`,`Translating ${progress.done} of ${progress.total} fields…`));
   }});
@@ -221,7 +221,7 @@ async function translateInto(target,source,useModel=false,overwrite=false){
   change(document=>{applied=applyTranslations(document,target,translated);},true);
   render();toast(applied?tr(`Tradução atualizada: ${applied} campos. Revise o resultado.`,`Translation updated: ${applied} fields. Review the result.`):tr('O conteúdo mudou durante a tradução. Tente novamente.','Content changed during translation. Try again.'));
 
- }catch(error){toast(error.code?aiError(error.code,state.lang):useModel?tr('Não foi possível baixar ou executar o modelo local. Verifique a conexão ou escreva em Conteúdo.','Could not download or run the local model. Check your connection or write under Content.'):tr('Tradução do navegador falhou. Use o tradutor local alternativo.','Browser translation failed. Try the alternative local translator.'));}
+ }catch(error){toast(usingAI&&error.code?aiError(error.code,state.lang):useModel?tr('Não foi possível baixar ou executar o modelo local. Verifique a conexão ou escreva em Conteúdo.','Could not download or run the local model. Check your connection or write under Content.'):tr('Tradução do navegador falhou. Use o tradutor local alternativo.','Browser translation failed. Try the alternative local translator.'));}
  finally{translationBusy=false;if($('#language'))$('#language').disabled=false;if(emptyVersion())schedulePreview();}
 }
 async function runExport(action){if(translationBusy||emptyVersion()){toast(tr('Preencha ou traduza esta versão antes de baixar.','Fill or translate this version before downloading.'));return;}try{await action();toast(tr('Arquivo preparado para download.','File prepared for download.'));}catch(error){toast(error.message);}}
