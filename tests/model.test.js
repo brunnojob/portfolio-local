@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {blank,validate,parseText,documentHtml,suggestions} from '../src/model.js';
+test('imports Portuguese sections without losing unmatched text',()=>{const p=parseText('Ana Silva\nana@example.com\nPerfil profissional\nTécnica offshore\nExperiência profissional:\nEmpresa A | 2024\nManutenção de sensores\nFormação\nTécnico em automação\nIdiomas\nPortuguês');assert.equal(p.name,'Ana Silva');assert.equal(p.email,'ana@example.com');assert.match(p.experience,/Manutenção de sensores/);assert.match(p.education,/automação/);assert.equal(p.languages,'Português');});
+test('imports English and preserves arbitrary project text',()=>{const p=parseText('Jane Doe\nSummary\nEngineer\nWork Experience\nAcme 2025\nProjects\nhttps://example.com');assert.equal(p.summary,'Engineer');assert.equal(p.experience,'Acme 2025');assert.equal(p.projects,'https://example.com');});
+test('preview treats imported markup as text',()=>{const s=blank();s.name='<img src=x onerror=alert(1)>';s.pt.projects='<script>alert(1)</script>';const html=documentHtml(s);assert.ok(!html.includes('<script>'));assert.ok(!html.includes('<img'));assert.ok(html.includes('&lt;script&gt;'));});
+test('backup rejects invalid shapes and strips unsafe values',()=>{assert.throws(()=>validate({}));const s=blank();s.photo='javascript:alert(1)';s.accent='red;background:url(https://evil)';s.template='injected';const safe=validate(s);assert.equal(safe.photo,'');assert.equal(safe.template,'editorial');assert.equal(safe.accent,'#153d35');});
+test('Portuguese and English versions remain independent',()=>{const s=blank();s.pt.summary='Perfil';s.en.summary='Profile';assert.equal(validate(s).pt.summary,'Perfil');assert.equal(validate(s).en.summary,'Profile');});
+test('offshore suggestions never invent held qualifications',()=>{const s=blank();s.sector='offshore';assert.match(suggestions(s)[0],/apenas certificados que possui/);assert.equal(s.pt.certifications,'');});
+test('PDF page counters do not become resume content',()=>{const p=parseText('Ana Silva\nSkills\nGit\n1 / 2');assert.equal(p.skills,'Git');});
