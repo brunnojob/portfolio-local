@@ -19,7 +19,40 @@ Documents use `sessionStorage`, not permanent local storage or a cloud document 
 
 The new version removes this application's older persistent drafts from localStorage and IndexedDB. Export anything needed from the older version before upgrading. Other applications' data is untouched.
 
-## OpenAI assistant
+## Forma local — default assistant, no credits
+
+The default assistant runs entirely in the browser. It combines a bilingual editor knowledge base with a deterministic task planner and validated editor actions. It does not call OpenAI, need an API key or download a chat model. It is not a general generative language model and cannot answer arbitrary world-knowledge questions. Unsupported questions are identified honestly.
+
+It can:
+
+- Create a new portfolio/resume or fill an existing outline for one of the 12 professional types. New documents preserve the previous document in the current session.
+- Fill explicitly supplied name, role, skills, education, projects, location and email; ask a focused follow-up when facts are missing.
+- Draft a short profile from the supplied role and skills, organize existing text, deduplicate skill lists and propose a project case study. Text proposals require Apply; it never invents employers, qualifications or metrics.
+- Give contextual editorial feedback and recommend real templates, palettes and layouts with reasons.
+- Apply templates, colors, paper format, fonts, editor theme, section visibility/order, navigation and language changes. Reversible document edits are grouped in undo history.
+- Open file/photo selection, prepare PDF/DOCX/HTML/JSON downloads and start local translation. Import contents and editor fields are treated as data, not task instructions.
+
+Examples in Portuguese:
+
+```text
+Crie um portfólio de desenvolvimento
+Crie um novo currículo do zero para primeira oportunidade
+Meu nome é Ana Silva; meu cargo é Desenvolvedora; sei HTML, CSS e JavaScript; escreva meu resumo
+Use o modelo ATS e cor azul
+Oculte certificações e mova projetos para cima
+Revise meu portfólio
+Traduza para inglês
+Baixe em PDF e DOCX
+Desfazer
+```
+
+English examples: “Create a development portfolio”, “Use the Studio template and green colors”, “My role is Developer; my skills are HTML, CSS; write my summary”, “Hide certifications”, “Download PDF and DOCX”.
+
+Local commands work without paid services after the app has loaded. Browser/local translation is separate: it may need an initial language-model download and can fail if the browser or network does not support it. The app is not advertised as an installed offline PWA.
+
+## Optional OpenAI assistant
+
+OpenAI is opt-in and requires owner-funded API credits. On provider errors the chat switches back to Forma local and handles the same request using supported local capabilities. It never labels a local response as an OpenAI answer.
 
 Enable AI and consent to the text transfer in Assistant. Ask for a complete outline, improvements to an import, writing help, job adaptation, template/color recommendations, translation, or guidance using the editor. The assistant can answer general questions within its capabilities; it cannot guarantee correctness or perform external actions.
 
@@ -29,7 +62,7 @@ Name, contact fields, photos, custom sections and the inactive language are omit
 
 The backend sends bounded text to the OpenAI Responses API with Structured Outputs and `store: false`. It does not save documents or chat in Postgres or log request content. Provider/platform retention policies still apply. The database stores only expiring counters with daily rotating HMAC client identifiers, never raw IP addresses or document text. Infrastructure providers may keep their own operational logs.
 
-Visitors do not need an API key. OpenAI usage is paid by the project owner; GitHub Pro/Developer benefits do not themselves fund OpenAI API requests. The shared limiter allows 10 requests per client/hour and at most 300 requests across the project per UTC day. Failed provider requests consume a slot too. CORS is not authentication; limits bound request count, not dollar spending. Configure OpenAI project budgets and monitor actual usage.
+Visitors do not need an API key. OpenAI usage is paid by the project owner; GitHub Pro/Developer benefits do not themselves fund OpenAI API requests. The optional OpenAI service’s shared limiter allows 10 requests per client/hour and at most 300 requests across the project per UTC day. Failed provider requests consume a slot too. CORS is not authentication; limits bound request count, not dollar spending. Configure OpenAI project budgets and monitor actual usage.
 
 ## Run and verify
 
@@ -66,12 +99,12 @@ curl -H 'Origin: https://brunnojob.github.io' \
 
 Expected: `{"configured":true}` after setting the secret. No secret values are returned. OPTIONS supports browser preflight; unapproved origins are rejected. Database failures fail closed before contacting OpenAI.
 
-A missing key is shown as setup pending, not a successful AI response. End-to-end OpenAI testing requires the owner's funded key. Local guidance, document creation, templates, import and downloads work without it.
+A missing key is shown as setup pending, not a successful AI response. End-to-end OpenAI testing requires the owner's funded key. Forma local, document creation, templates, import and downloads work without it.
 
 ## Português
 
 Editor gratuito, sem cadastro. Importe ou crie do zero, personalize modelos e cores e baixe PDF, DOCX ou HTML. Os rascunhos ficam somente na sessão da aba; baixe antes de fechar. A interface muda integralmente entre português e inglês. A tradução de conteúdo usa IA autorizada ou tradução local, preservando o original.
 
-O assistente já tem integração com a Supabase. Para ativar as respostas reais, cadastre `OPENAI_API_KEY` somente nos segredos da Edge Function pelo link acima. O consumo da API é cobrado do proprietário. Nenhuma chave deve ser enviada ao frontend ou adicionada ao GitHub.
+O assistente padrão é o Forma local, que executa tarefas sem créditos. A integração opcional com OpenAI continua disponível na Supabase. Para ativar as respostas da OpenAI, cadastre `OPENAI_API_KEY` somente nos segredos da Edge Function pelo link acima. O consumo da API é cobrado do proprietário. Nenhuma chave deve ser enviada ao frontend ou adicionada ao GitHub.
 
 MIT license.

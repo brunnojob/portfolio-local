@@ -43,3 +43,5 @@
 :root[data-theme="light"] .rail-button.active{background:#e4e9f3;color:#253553}
 :root[data-theme="light"] .welcome h1{color:#252936}
 :root[data-theme="light"] .document-name input{background:transparent}
+
+.local-execution{display:block;margin:8px 0;color:#98c9ae;font-size:10px;line-height:1.6}:root[data-theme="light"] .local-execution{color:#245b3b}
