@@ -1,3 +1,4 @@
+import {templates} from './templates.js';
 export const fields = ['title','summary','experience','education','skills','certifications','languages','projects','extra'];
 export const labels = {
  pt: {title:'Cargo / objetivo',summary:'Perfil profissional',experience:'Experiência profissional',education:'Formação',skills:'Competências',certifications:'Certificações',languages:'Idiomas',projects:'Projetos e portfólio',extra:'Informações adicionais'},
@@ -14,7 +15,7 @@ export const sectors = {
  education: ['Educação / pesquisa','Education / research','Destaque disciplinas, metodologias, pesquisa e publicações. Inclua links e resultados verificáveis.', 'Highlight subjects, methods, research and publications. Include links and verifiable results.'],
  services: ['Comércio / serviços','Sales / services','Mostre atendimento, organização, ferramentas e metas atingidas com dados reais.', 'Show customer service, organization, tools and targets achieved with real data.']
 };
-export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,sector:'general',template:'editorial',lang:'pt',accent:'#153d35',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
+export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,sector:'general',template:'editorial',lang:'pt',accent:'#153d35',ink:'#273443',font:'auto',fontSize:10.5,lineHeight:1.45,margin:18,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
 export function validate(data) {
  if (!data || data.version!==1 || !data.pt || !data.en) throw Error('Backup inválido / Invalid backup');
  const out=blank();
@@ -23,9 +24,19 @@ export function validate(data) {
  if(data.photo && /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(data.photo) && data.photo.length<1000000) out.photo=data.photo;
  out.showPhoto=!!data.showPhoto;
  if(sectors[data.sector]) out.sector=data.sector;
- if(['editorial','classic','modern'].includes(data.template)) out.template=data.template;
+ if(templates.some(t=>t.id===data.template)) out.template=data.template;
  if(data.lang==='en') out.lang='en';
  if(/^#[0-9a-f]{6}$/i.test(data.accent)) out.accent=data.accent;
+ if(/^#[0-9a-f]{6}$/i.test(data.ink))out.ink=data.ink;
+ if(['auto','helvetica','times','courier'].includes(data.font))out.font=data.font;
+ for(const [k,min,max] of [['fontSize',9,13],['lineHeight',1.15,1.9],['margin',12,26]])if(Number.isFinite(data[k]))out[k]=Math.min(max,Math.max(min,data[k]));
+ if(data.paper==='letter')out.paper='letter';
+ for(const k of ['projectName','id','jobText'])if(typeof data[k]==='string')out[k]=data[k].slice(0,k==='jobText'?12000:150);
+ if(Number.isFinite(data.updatedAt))out.updatedAt=data.updatedAt;
+ const keys=fields.filter(k=>k!=='title');
+ if(Array.isArray(data.sectionOrder))out.sectionOrder=[...new Set([...data.sectionOrder.filter(k=>keys.includes(k)),...keys])];
+ if(Array.isArray(data.hiddenSections))out.hiddenSections=[...new Set(data.hiddenSections.filter(k=>keys.includes(k)))];
+ if(Array.isArray(data.customSections))out.customSections=data.customSections.slice(0,10).filter(x=>x&&typeof x.id==='string').map(x=>({id:x.id.slice(0,100),pt:{title:String(x.pt?.title||'').slice(0,150),text:String(x.pt?.text||'').slice(0,100000)},en:{title:String(x.en?.title||'').slice(0,150),text:String(x.en?.text||'').slice(0,100000)}}));
  return out;
 }
 const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[:\s]+$/,'').trim();
@@ -36,7 +47,7 @@ export function parseText(text, lang='pt') {
  result.phone=text.match(/(?:\+\d{1,3}[ .-]?)?\(?\d{2,3}\)?[ .-]?\d{4,5}[ .-]\d{4}/)?.[0]||'';
  const aliases={summary:['resumo','perfil','perfil profissional','resumo profissional','objetivo','summary','professional profile','profile','objective'],experience:['experiencia','experiencia profissional','experience','professional experience','work experience','employment'],education:['formacao','formacao academica','educacao','education'],skills:['competencias','habilidades','skills','technical skills','tecnologias'],certifications:['certificacoes','cursos','certifications','certificates'],languages:['idiomas','languages'],projects:['projetos','portfolio','projetos e portfolio','projects','projects and portfolio'],extra:['informacoes adicionais','additional information']};
  let section='summary';
- lines.forEach((line,i)=>{const key=Object.keys(aliases).find(k=>aliases[k].includes(normalize(line))); if(key){section=key;return;} if(i===0 && line.length<90 && !line.includes('@')){result.name=line;return;} if(line===result.email||line===result.phone)return;result[section]+=(result[section]?'\n':'')+line;});
+ lines.forEach((line,i)=>{const key=Object.keys(aliases).find(k=>aliases[k].includes(normalize(line))); if(key){section=key;return;} if(i===0 && line.length<90 && !line.includes('@')){result.name=line;return;} if(line===result.email||line===result.phone)return;if(i===1 && line.length<110 && !line.includes('@') && !/\d/.test(line)){result.title=line;return;}result[section]+=(result[section]?'\n':'')+line;});
  return result;
 }
 export function suggestions(data) {
@@ -56,5 +67,9 @@ export const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 export function documentHtml(data, portfolio=false) {
  const d=data[data.lang],e=escapeHtml;
  const contact=[data.location,data.email,data.phone,data.website].filter(Boolean).map(e).join(' · ');
- return `<article class="resume ${data.template} ${portfolio?'portfolio':''}" style="--accent:${data.accent}"><header>${data.showPhoto&&data.photo?`<img class="portrait" src="${data.photo}" alt="">`:''}<div class="eyebrow">${portfolio?(data.lang==='pt'?'PORTFÓLIO PROFISSIONAL':'PROFESSIONAL PORTFOLIO'):''}</div><h1>${e(data.name|| (data.lang==='pt'?'Seu nome':'Your name'))}</h1><div class="role">${e(d.title|| (data.lang==='pt'?'Seu próximo capítulo profissional':'Your next professional chapter'))}</div><div class="contact">${contact}</div></header>${fields.filter(k=>k!=='title' && d[k]).map(k=>`<section><h2>${labels[data.lang][k]}</h2><p>${e(d[k])}</p></section>`).join('')}</article>`;
+ return `<article class="resume ${data.template} ${portfolio?'portfolio':''}" style="--accent:${data.accent}"><header>${data.showPhoto&&data.photo?`<img class="portrait" src="${data.photo}" alt="">`:''}<div class="eyebrow">${portfolio?(data.lang==='pt'?'PORTFÓLIO PROFISSIONAL':'PROFESSIONAL PORTFOLIO'):''}</div><h1>${e(data.name|| (data.lang==='pt'?'Seu nome':'Your name'))}</h1><div class="role">${e(d.title|| (data.lang==='pt'?'Seu próximo capítulo profissional':'Your next professional chapter'))}</div><div class="contact">${contact}</div></header>${sections(data).map(s=>`<section><h2>${e(s.title)}</h2><p>${linkify(s.text)}</p></section>`).join('')}</article>`;
 }
+
+export function sections(data){const d=data[data.lang],order=data.sectionOrder||fields.filter(k=>k!=='title');return [...order.filter(k=>d[k]&&!(data.hiddenSections||[]).includes(k)).map(k=>({id:k,title:labels[data.lang][k],text:d[k]})),...(data.customSections||[]).filter(s=>s[data.lang]?.text).map(s=>({id:s.id,title:s[data.lang].title,text:s[data.lang].text}))];}
+
+function linkify(text){let html='',start=0;for(const match of String(text).matchAll(/https?:\/\/[^\s<>\"']+/g)){html+=escapeHtml(text.slice(start,match.index));html+=`<a href="${escapeHtml(match[0])}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[0])}</a>`;start=match.index+match[0].length;}return html+escapeHtml(text.slice(start));}
