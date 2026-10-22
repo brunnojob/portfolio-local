@@ -16,10 +16,12 @@ export const sectors = {
  services: ['Comércio / serviços','Sales / services','Mostre atendimento, organização, ferramentas e metas atingidas com dados reais.', 'Show customer service, organization, tools and targets achieved with real data.']
 };
 export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,sector:'general',template:'editorial',lang:'pt',accent:'#153d35',ink:'#273443',font:'auto',fontSize:10.5,lineHeight:1.45,margin:18,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
+const cleanImportedHeader=value=>value.replace(/^(.+?)\s+\|\s+(?:curr[ií]culo(?:\s+profissional)?|resume|cv)(?:\s+\|\s*\d+)?$/i,'$1');
 export function validate(data) {
  if (!data || data.version!==1 || !data.pt || !data.en) throw Error('Backup inválido / Invalid backup');
  const out=blank();
  for (const k of ['name','email','phone','location','website']) if(typeof data[k]==='string') out[k]=data[k].slice(0,2000);
+ out.name=cleanImportedHeader(out.name);
  for(const lang of ['pt','en']) for(const k of fields) if(typeof data[lang][k]==='string') out[lang][k]=data[lang][k].slice(0,100000);
  if(data.photo && /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(data.photo) && data.photo.length<1000000) out.photo=data.photo;
  out.showPhoto=!!data.showPhoto;
@@ -32,6 +34,7 @@ export function validate(data) {
  for(const [k,min,max] of [['fontSize',9,13],['lineHeight',1.15,1.9],['margin',12,26]])if(Number.isFinite(data[k]))out[k]=Math.min(max,Math.max(min,data[k]));
  if(data.paper==='letter')out.paper='letter';
  for(const k of ['projectName','id','jobText'])if(typeof data[k]==='string')out[k]=data[k].slice(0,k==='jobText'?12000:150);
+ out.projectName=cleanImportedHeader(out.projectName);
  if(Number.isFinite(data.updatedAt))out.updatedAt=data.updatedAt;
  const keys=fields.filter(k=>k!=='title');
  if(Array.isArray(data.sectionOrder))out.sectionOrder=[...new Set([...data.sectionOrder.filter(k=>keys.includes(k)),...keys])];
@@ -43,11 +46,18 @@ const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase
 export function parseText(text, lang='pt') {
  const result={name:'',email:'',phone:'',...Object.fromEntries(fields.map(k=>[k,'']))};
  const lines=text.replace(/\r/g,'').split('\n').map(s=>s.trim()).filter(s=>s && !/^\d+\s*\/\s*\d+$/.test(s));
+ const genericHeading=/^(?:curr[ií]culo(?:\s+profissional)?|resume|cv)(?:\s*\|\s*\d+)?$/i;
+ const header=lines[0]?.split(/\s+\|\s+/).map(part=>part.trim()).filter(Boolean)||[];
+ if(header.length>1&&header[0].length<90){
+  lines[0]=header[0];
+  const role=header.slice(1).find(part=>!/^(?:\d+|\d+\s*\/\s*\d+)$/.test(part)&&!genericHeading.test(part));
+  if(role)result.title=role;
+ }
  result.email=text.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/)?.[0]||'';
  result.phone=text.match(/(?:\+\d{1,3}[ .-]?)?\(?\d{2,3}\)?[ .-]?\d{4,5}[ .-]\d{4}/)?.[0]||'';
  const aliases={summary:['resumo','perfil','perfil profissional','resumo profissional','objetivo','summary','professional profile','profile','objective'],experience:['experiencia','experiencia profissional','experience','professional experience','work experience','employment'],education:['formacao','formacao academica','educacao','education'],skills:['competencias','habilidades','skills','technical skills','tecnologias'],certifications:['certificacoes','cursos','certifications','certificates'],languages:['idiomas','languages'],projects:['projetos','portfolio','projetos e portfolio','projects','projects and portfolio'],extra:['informacoes adicionais','additional information']};
  let section='summary';
- lines.forEach((line,i)=>{const key=Object.keys(aliases).find(k=>aliases[k].includes(normalize(line))); if(key){section=key;return;} if(i===0 && line.length<90 && !line.includes('@')){result.name=line;return;} if(line===result.email||line===result.phone)return;if(i===1 && line.length<110 && !line.includes('@') && !/\d/.test(line)){result.title=line;return;}result[section]+=(result[section]?'\n':'')+line;});
+ lines.forEach((line,i)=>{const key=Object.keys(aliases).find(k=>aliases[k].includes(normalize(line))); if(key){section=key;return;} if(i===0 && line.length<90 && !line.includes('@')){result.name=line;return;} if(line===result.email||line===result.phone||genericHeading.test(line))return;if(i===1&&!result.title&&line.length<110 && !line.includes('@') && !/\d/.test(line)){result.title=line;return;}result[section]+=(result[section]?'\n':'')+line;});
  return result;
 }
 export function suggestions(data) {

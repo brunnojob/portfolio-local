@@ -19,3 +19,8 @@
 .assistant-form input{min-width:0}
 .assistant-form button{flex:none}
 @media(max-width:760px){.tool-rail{overflow-x:auto;justify-content:flex-start}.rail-button{min-width:57px}}
+.version-empty{width:min(100%,520px);margin:auto;display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:32px;border:1px solid #665b85;background:#222837;border-radius:12px;box-shadow:0 12px 32px #0003}
+.version-empty h2{font-size:21px;line-height:1.35;margin:0;color:#f0e9ff}
+.version-empty p{font-size:12px;line-height:1.7;color:#b9c4d7;margin:0}
+.version-empty small{font-size:10px;line-height:1.6;color:#96a5bc}
+.version-empty button{width:100%}

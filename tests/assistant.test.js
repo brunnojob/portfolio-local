@@ -15,11 +15,11 @@ test('assistant follows the document and links to editable fields',()=>{
  assert.equal(assistantReply('Qual modelo para ATS?',document).panel,'templates');
 });
 
-test('bilingual guidance does not claim an automatic translation',()=>{
+test('bilingual guidance points to on-device translation and review',()=>{
  const document=blank();
  document.pt.summary='Experiência em projetos.';
  assert.ok(assistantPlan(document).some(task=>task.language==='en'&&task.field==='summary'));
- assert.match(assistantReply('Pode traduzir para inglês?',document).text,/não há tradução automática local/i);
+ assert.match(assistantReply('Pode traduzir para inglês?',document).text,/navegador traduz os campos vazios/i);
  document.lang='en';
  document.en.summary='Experience with projects.';
  assert.equal(assistantReply('How can I improve my summary?',document).field,'summary');
