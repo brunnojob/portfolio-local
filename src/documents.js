@@ -2,7 +2,7 @@ import {Document,Packer,Paragraph,TextRun,HeadingLevel,ImageRun} from 'docx';
 import {jsPDF} from 'jspdf';
 import {fields,labels,documentHtml} from './model.js';
 
-export function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+export function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 const filename=(data,ext)=>`${(data.name||'curriculo').replace(/[^\p{L}\p{N}-]/gu,'-')}-${data.lang}.${ext}`;
 export async function makeDocx(data){
  const d=data[data.lang], color=data.accent.slice(1);
@@ -28,4 +28,4 @@ export function makePdf(data){
  return pdf;
 }
 export async function exportDocx(data){download(await makeDocx(data),filename(data,'docx'));}
-export function exportPdf(data){makePdf(data).save(filename(data,'pdf'));}
+export function exportPdf(data){download(makePdf(data).output('blob'),filename(data,'pdf'));}
