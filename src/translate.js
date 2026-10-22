@@ -43,7 +43,7 @@ function chunks(text,size=3000){
  return result;
 }
 
-export async function translateMissing(document,source,target,{Translator=globalThis.Translator,onProgress=()=>{}}={}){
+export async function translateMissing(document,source,target,{Translator=globalThis.Translator,onProgress=()=>{},chunkSize=3000}={}){
  const entries=translationEntries(document,source,target);
  if(!entries.length)return [];
  if(!Translator?.create)throw Error('TRANSLATOR_UNAVAILABLE');
@@ -52,7 +52,7 @@ export async function translateMissing(document,source,target,{Translator=global
   const translated=[];
   for(const [index,item] of entries.entries()){
    const pieces=[];
-   for(const part of chunks(item.text))pieces.push(part.trim()?await translator.translate(part):'');
+   for(const part of chunks(item.text,chunkSize))pieces.push(part.trim()?await translator.translate(part):'');
    translated.push({...item,text:pieces.join('\n')});
    onProgress({done:index+1,total:entries.length});
   }

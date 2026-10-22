@@ -37,7 +37,7 @@ The storage dialog can request persistent storage from browsers that support it.
 
 ## What stays manual
 
-Portuguese and English versions remain independent. Switching languages translates missing fields on the device when the browser supports the Translator API. Chrome desktop supports this API and may download a language pack on first use. Other browsers keep the target version editable and show an explicit empty state instead of a blank PDF. Review all translated text, especially names, titles, dates and links. Suggestions use local rules and do not generate credentials or experience.
+Portuguese and English versions remain independent. Switching languages translates missing fields on the device when the browser supports the Translator API. Chrome desktop supports this API and may download a language pack on first use. When that API is unavailable, the editor offers an optional local translation model downloaded from Hugging Face (roughly 120 MB per direction). Translation runs in the browser; resume text is not sent to the model host. The target version remains editable and shows an explicit empty state until translation succeeds. Review all translated text, especially names, titles, dates and links. Suggestions use local rules and do not generate credentials or experience.
 
 Start in **Assistant** to follow the next steps or ask about a profile, project, experience, English version, template or job description. Its answers provide writing structure and editing shortcuts; they do not fact-check claims or generate a finished resume. Switch languages to translate missing fields when supported, or write the other version manually before exporting it.
 
@@ -59,7 +59,7 @@ npm test
 npm run build
 ```
 
-Production files are written to `dist/`. Document libraries and the PDF worker are bundled locally. There are no runtime CDNs, trackers, analytics or remote document-processing endpoints. The browser contacts the static host for the app and its assets; a supported browser may separately download a language pack for on-device translation.
+Production files are written to `dist/`. Document libraries and the PDF worker are bundled locally. There are no trackers, analytics or remote document-processing endpoints. The browser contacts the static host for app assets. Translation can download a browser language pack or, with an explicit click, model files from Hugging Face. The model is cached by the browser for later use.
 
 Tests cover the actual PDF parser, PDF/DOCX content across all templates, multipage column layouts, section ordering and visibility, safe HTML output, local draft migration, storage reopen, document recovery and outdated deployment errors.
 
