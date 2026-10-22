@@ -1,3 +1,4 @@
+import {planDocumentCommand,applyDocumentCommand} from './document-commands.js';
 import {blank,fields,labels,validate} from './model.js';
 import {templates,palettes,templateName,paletteName} from './templates.js';
 import {portfolioTypes,applyPortfolioType} from './portfolio-types.js';
@@ -75,7 +76,7 @@ function designFor(q,state){
  if(type==='business'){template='executive';reason=en?'The professional header supports a concise business presentation.':'O cabeçalho profissional favorece uma apresentação objetiva de negócios.';}
  const explicit=templates.find(t=>templateAliases[t.id]?.some(alias=>new RegExp(`\\b${alias}\\b`).test(q)));
  if(explicit){template=explicit.id;reason=explicit.description[en?1:0];}
- let palette=palettes[2];
+ let palette=palettes[['designer','writer','photographer'].includes(type)?6:type==='academic'?4:type==='engineering'?12:state.sector==='health'?3:0];
  for(const [pattern,index] of colorPatterns)if(pattern.test(q))palette=palettes[index];
  const hex=q.match(/#[0-9a-f]{6}\b/i)?.[0];
  return {template,webLayout:count>2?'cards':['designer','writer'].includes(type)?'editorial':'cards',accent:hex||palette.accent,ink:palette.ink,reason};
@@ -93,6 +94,7 @@ export function planLocalRequest(input,state,context={}){
  if(is(/\b(refazer|refaca|redo)\b/))return {...result,text:t('Vou refazer a última edição desfeita.','I will redo the last undone edit.'),actions:[{type:'history',direction:'redo'}]};
  const field=fieldOf(q),facts=parseFacts(input);
  if(/^(?:defina|preencha|coloque|atualize|set|fill|update)\s+.{2,45}?\s*(?::|=|\bcomo\b|\bto\b)\s*[\s\S]+$/i.test(input)&&facts.length===1)return {...result,actions:facts,text:t('Vou preencher o campo solicitado com o texto exato informado. Você pode desfazer.','I will fill the requested field with your exact supplied text. You can undo.')};
+ const batch=planDocumentCommand(input,state);if(batch)return batch;
  const making=creation.test(q)&&is(/\b(portfolio|curriculo|resume|cv)\b/)&&!field;
  const type=Object.entries(typePatterns).find(([,pattern])=>pattern.test(q))?.[0]||'general';
  if(making&&!faq){
@@ -101,7 +103,7 @@ export function planLocalRequest(input,state,context={}){
   add({type:'mode',value:is(/\b(portfolio)\b/)?'portfolio':'resume'},'Abrirei a prévia do documento.','I will open the document preview.');
  }
  for(const action of facts)add(action,`Vou preencher ${basicFields.includes(action.field)?({name:'nome',email:'e-mail',location:'cidade'})[action.field]||action.field:labels.pt[action.field]} com o que você informou.`,`I will fill ${basicFields.includes(action.field)?action.field:labels.en[action.field]} with your supplied text.`);
- if(!faq&&changeVerb.test(q)&&is(/\b(modelo|template|design|layout|cor|cores|color|colors|paleta|palette|ats)\b/)){
+ if(!faq&&(changeVerb.test(q)||writing.test(q))&&is(/\b(modelo|template|design|layout|cor|cores|color|colors|paleta|palette|ats)\b/)){
   const design=designFor(q,state),explicitTemplate=is(/\b(modelo|template|design|ats)\b/);
   if(explicitTemplate)add({type:'design',values:{template:design.template}},`Vou usar o modelo ${templateName(templates.find(x=>x.id===design.template),'pt')}.`,`I will use the ${templateName(templates.find(x=>x.id===design.template),'en')} template.`);
   if(is(/\b(cor|cores|color|colors|paleta|palette)\b/))add({type:'design',values:{accent:design.accent,ink:design.ink}},`Vou aplicar o destaque ${design.accent} e texto ${design.ink}.`,`I will apply accent ${design.accent} and text ${design.ink}.`);
@@ -123,7 +125,7 @@ export function planLocalRequest(input,state,context={}){
  if(!faq&&is(/\b(foto|photo|picture)\b/)&&is(/\b(adicione|adicionar|coloque|colocar|troque|trocar|upload|add|change)\b/))add({type:'photo'},'Vou abrir a seleção de foto JPG, PNG ou WebP.','I will open the JPG, PNG or WebP photo picker.');
  const translating=is(/\b(traduza|traduzir|translate|traducao|translation)\b/);
  const language=is(/\b(ingles|english|en)\b/)?'en':is(/\b(portugues|portuguese|pt)\b/)?'pt':null;
- if(!faq&&language&&(translating||changeVerb.test(q)))add({type:'language',value:language,translate:translating},translating?'Vou traduzir os campos vazios neste dispositivo. O primeiro uso pode baixar um modelo; seu texto não vai para a OpenAI.':'Vou mudar o idioma da interface, mantendo as versões de texto separadas.',translating?'I will translate missing fields on this device. First use may download a model; text is not sent to OpenAI.':'I will change the interface language, keeping text versions separate.');
+ if(!faq&&language&&(translating||changeVerb.test(q)))add({type:'language',value:language,translate:translating},translating?'Vou traduzir campos novos e atualizar traduções automáticas desatualizadas neste dispositivo. O primeiro uso pode baixar um modelo; seu texto não vai para a OpenAI.':'Vou mudar o idioma da interface, mantendo as versões de texto separadas.',translating?'I will translate new fields and update outdated automatic translations on this device. First use may download a model; text is not sent to OpenAI.':'I will change the interface language, keeping text versions separate.');
  if(!faq&&is(/\b(baixe|baixar|exporte|exportar|salve|salvar|download|export|save)\b/)){
   const formats=[];
   if(is(/\b(pdf)\b/))formats.push('pdf');if(is(/\b(docx|word)\b/))formats.push('docx');if(is(/\b(html|site)\b/))formats.push('html');if(is(/\b(json|backup)\b/))formats.push('json');
@@ -185,6 +187,7 @@ export function applyLocalDocumentActions(state,actions){
  if(!Array.isArray(actions)||actions.length>30)throw Error('invalid_local_actions');
  for(const action of actions){
   if(!action||typeof action!=='object')throw Error('invalid_local_action');
+  if(applyDocumentCommand(next,action))continue;
   if(action.type==='field'){
    if(![...basicFields,...fields].includes(action.field)||typeof action.value!=='string'||action.value.length>100000)throw Error('invalid_local_field');
    if(fields.includes(action.field))next[next.lang][action.field]=action.value;else next[action.field]=action.value;

@@ -15,7 +15,7 @@ export const sectors = {
  education: ['Educação / pesquisa','Education / research','Destaque disciplinas, metodologias, pesquisa e publicações. Inclua links e resultados verificáveis.', 'Highlight subjects, methods, research and publications. Include links and verifiable results.'],
  services: ['Comércio / serviços','Sales / services','Mostre atendimento, organização, ferramentas e metas atingidas com dados reais.', 'Show customer service, organization, tools and targets achieved with real data.']
 };
-export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,portfolioType:'general',webLayout:'cards',sector:'general',template:'editorial',lang:'pt',accent:'#454545',ink:'#292929',font:'auto',fontSize:10.5,lineHeight:1.45,margin:18,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
+export const blank = () => ({version:1,name:'',email:'',phone:'',location:'',website:'',photo:'',showPhoto:false,portfolioType:'general',webLayout:'minimal',sector:'general',template:'editorial',lang:'pt',accent:'#454545',ink:'#292929',font:'auto',fontSize:10.5,lineHeight:1.3,margin:14,paper:'a4',projectName:'',id:'',updatedAt:0,sectionOrder:fields.filter(k=>k!=='title'),hiddenSections:[],customSections:[],jobText:'',sectionNumbers:false,translationState:{},pt:Object.fromEntries(fields.map(k=>[k,''])),en:Object.fromEntries(fields.map(k=>[k,'']))});
 const cleanImportedHeader=value=>value.replace(/^(.+?)\s+\|\s+(?:curr[ií]culo(?:\s+profissional)?|resume|cv)(?:\s+\|\s*\d+)?$/i,'$1');
 export function validate(data) {
  if (!data || data.version!==1 || !data.pt || !data.en) throw Error('Backup inválido / Invalid backup');
@@ -38,6 +38,10 @@ export function validate(data) {
  for(const k of ['projectName','id','jobText'])if(typeof data[k]==='string')out[k]=data[k].slice(0,k==='jobText'?12000:150);
  out.projectName=cleanImportedHeader(out.projectName);
  if(Number.isFinite(data.updatedAt))out.updatedAt=data.updatedAt;
+ out.sectionNumbers=data.sectionNumbers===true;
+ if(data.translationState&&typeof data.translationState==='object')for(const [key,meta] of Object.entries(data.translationState).slice(0,60)){
+  if(/^(pt|en):(field:[a-z]+|custom(?:Title|Text):.{1,100})$/.test(key)&&meta&&['pt','en'].includes(meta.source)&&/^\d+:\d+:\d+$/.test(meta.sourceHash)&&/^\d+:\d+:\d+$/.test(meta.targetHash))out.translationState[key]={source:meta.source,sourceHash:meta.sourceHash,targetHash:meta.targetHash};
+ }
  const keys=fields.filter(k=>k!=='title');
  if(Array.isArray(data.sectionOrder))out.sectionOrder=[...new Set([...data.sectionOrder.filter(k=>keys.includes(k)),...keys])];
  if(Array.isArray(data.hiddenSections))out.hiddenSections=[...new Set(data.hiddenSections.filter(k=>keys.includes(k)))];
@@ -68,7 +72,7 @@ export function suggestions(data) {
  if(!data.email) tips.push(en?'Add a professional email address.':'Adicione um e-mail profissional.');
  if(!d.summary) tips.push(en?'Write a short profile with your target role, skills and value.':'Escreva um perfil breve com objetivo, competências e contribuição.');
  if(d.summary.length>650) tips.push(en?'Shorten your profile; move details to experience.':'Encurte o perfil; leve detalhes para experiência.');
- if(!d.experience) tips.push(en?'Include experience, volunteering or relevant academic work.':'Inclua experiência, trabalho voluntário ou atividades acadêmicas relevantes.');
+ if(!d.experience&&!d.projects) tips.push(en?'Include experience, volunteering or relevant academic work.':'Inclua experiência, trabalho voluntário ou atividades acadêmicas relevantes.');
  if(d.experience && !/\d/.test(d.experience)) tips.push(en?'Where possible, quantify scope or results using real figures.':'Quando possível, quantifique escopo ou resultados com números reais.');
  if(!d.skills) tips.push(en?'List skills relevant to your target job.':'Liste competências relevantes para a vaga desejada.');
  if(data.showPhoto) tips.push(en?'Check whether a photo is customary for the target country and employer.':'Confira se a foto é adequada ao país e à empresa de destino.');
@@ -82,6 +86,6 @@ export function documentHtml(data, portfolio=false) {
  return `<article class="resume ${data.template} ${portfolio?'portfolio':''}" style="--accent:${data.accent}"><header>${data.showPhoto&&data.photo?`<img class="portrait" src="${data.photo}" alt="">`:''}<div class="eyebrow">${portfolio?(data.lang==='pt'?'PORTFÓLIO PROFISSIONAL':'PROFESSIONAL PORTFOLIO'):''}</div><h1>${e(data.name|| (data.lang==='pt'?'Seu nome':'Your name'))}</h1><div class="role">${e(d.title|| (data.lang==='pt'?'Seu próximo capítulo profissional':'Your next professional chapter'))}</div><div class="contact">${contact}</div></header>${sections(data).map(s=>`<section><h2>${e(s.title)}</h2><p>${linkify(s.text)}</p></section>`).join('')}</article>`;
 }
 
-export function sections(data){const d=data[data.lang],order=data.sectionOrder||fields.filter(k=>k!=='title');return [...order.filter(k=>d[k]&&!(data.hiddenSections||[]).includes(k)).map(k=>({id:k,title:labels[data.lang][k],text:d[k]})),...(data.customSections||[]).filter(s=>s[data.lang]?.text).map(s=>({id:s.id,title:s[data.lang].title,text:s[data.lang].text}))];}
+export function sections(data){const d=data[data.lang],order=data.sectionOrder||fields.filter(k=>k!=='title');return [...order.filter(k=>d[k]&&!(data.hiddenSections||[]).includes(k)).map(k=>({id:k,title:labels[data.lang][k],text:d[k]})),...(data.customSections||[]).filter(s=>s[data.lang]?.text).map(s=>({id:s.id,title:s[data.lang].title,text:s[data.lang].text}))].map((s,i)=>({...s,title:(data.sectionNumbers?String(i+1).padStart(2,'0')+'  ':'')+s.title}));}
 
 function linkify(text){let html='',start=0;for(const match of String(text).matchAll(/https?:\/\/[^\s<>\"']+/g)){html+=escapeHtml(text.slice(start,match.index));html+=`<a href="${escapeHtml(match[0])}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[0])}</a>`;start=match.index+match[0].length;}return html+escapeHtml(text.slice(start));}

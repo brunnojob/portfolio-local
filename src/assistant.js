@@ -12,10 +12,10 @@ export function assistantPlan(data){
  if(!d.title.trim())add('title',m.title,'title',1);
  if(!data.email.trim())add('email',m.email,'email',2);
  if(!d.summary.trim())add('summary',m.summary,'summary',3);
- if(!d.experience.trim())add('experience',m.experience,'experience',4);
- if(!d.education.trim())add('education',m.education,'education',5);
+ if(!d.experience.trim()&&!d.projects.trim())add('projects',m.projects,'projects',4);
+ if(data.portfolioType==='academic'&&!d.education.trim())add('education',m.education,'education',5);
  if(!d.skills.trim())add('skills',m.skills,'skills',6);
- if(!d.projects.trim())add('projects',m.projects,'projects',7);
+
  if(fields.some(key=>/\[[^\]]+\]/.test(d[key])))add('placeholders',m.placeholders,'summary',8);
  const other=lang==='pt'?'en':'pt',missing=fields.find(key=>d[key].trim()&&!data[other][key].trim());
  if(missing)tasks.push({id:'otherLanguage',text:m.otherLanguage,field:missing,language:other,priority:9});
@@ -27,7 +27,7 @@ export function assistantReply(input,data){
  const lang=data.lang==='en'?'en':'pt',d=data[lang],q=input.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(),is=(...terms)=>terms.some(term=>q.includes(term));
  const role=d.title.trim()||(data.sector!=='general'?sectors[data.sector][lang==='en'?1:0]:'');
  const target=role?` ${lang==='en'?'for':'para'} ${role}`:'';
- if(is('ingles','english','traduz','translate','idioma','language'))return {field:'summary',text:lang==='en'?'Use the PT/EN button to edit a separate English version. Keep the facts identical, adapt job titles and action verbs to the target country, then review the complete text. When supported, your browser translates missing fields on the device. Review job titles, names and factual claims before exporting.':'Use PT/EN para editar uma versão separada em inglês. Mantenha os fatos, adapte cargos e verbos ao país de destino e revise o texto completo. Quando disponível, o navegador traduz os campos vazios no dispositivo. Revise cargos, nomes e informações antes de baixar.'};
+ if(is('ingles','english','traduz','translate','idioma','language'))return {field:'summary',text:lang==='en'?'Use the PT/EN button to edit a separate English version. Keep the facts identical, adapt job titles and action verbs to the target country, then review the complete text. When supported, your browser translates missing fields on the device. Review job titles, names and factual claims before exporting.':'Use PT/EN para editar uma versão separada em inglês. Mantenha os fatos, adapte cargos e verbos ao país de destino e revise o texto completo. Quando disponível, o navegador traduz os campos novos e atualiza traduções automáticas desatualizadas no dispositivo. Revise cargos, nomes e informações antes de baixar.'};
  if(is('resumo','perfil','summary','profile','sobre mim','about me'))return {field:'summary',text:lang==='en'?`For your profile${target}, write 2–3 sentences: your role or goal, evidence of two relevant skills, and the kind of result you can deliver. Replace every example with your own facts.`:`Para o perfil${target}, escreva 2 ou 3 frases: sua função ou objetivo, evidências de duas competências e o resultado que pode entregar. Use somente fatos seus.`};
  if(is('experien','trabalho','work','achievement','resultado','conquista'))return {field:'experience',text:lang==='en'?'For each role, write: action + context or tool + verified result. Example structure: “Organized [process] using [tool], reducing [real metric].” If you lack paid work, use a relevant project or volunteer activity.':'Para cada atuação, escreva: ação + contexto ou ferramenta + resultado verificável. Estrutura: “Organizei [processo] com [ferramenta], reduzindo [medida real]”. Sem emprego formal, use projeto ou voluntariado relevante.'};
  if(is('projeto','portfolio','project','link'))return {field:'projects',text:lang==='en'?'Select two or three relevant projects. For each, state the problem, your specific contribution, the approach and an observable outcome. Add a working public link when possible.':'Selecione dois ou três projetos relevantes. Em cada um, conte o problema, sua contribuição específica, a solução e um resultado observável. Inclua um link público funcional quando possível.'};

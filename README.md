@@ -10,7 +10,7 @@ Free portfolio and resume studio in Brazilian Portuguese and English. GitHub Pag
 - Start from scratch with 12 professional outlines, including development, design, data, creative work, research, engineering, business and first opportunities.
 - Choose 20 document templates, 13 color palettes, dark/light editor theme, fonts, margins, A4/Letter, photo and custom sections.
 - Export selectable-text PDF, editable Word DOCX, a standalone portfolio website in four layouts, or a complete JSON backup.
-- Keep separate Portuguese and English versions. Changing language translates every UI label immediately. Missing content can be translated by the browser, the optional local model, or OpenAI after consent. Existing authored translations are preserved.
+- Keep separate Portuguese and English versions. Changing language translates every UI label immediately. New fields and outdated automatically translated fields can be synchronized by the browser, the optional local model, or OpenAI after consent. Manual translations and concurrent edits are preserved. Content → Rebuild this version explicitly replaces an old version after confirmation; undo is available. Paragraphs, URLs and emails retain their structure in local translation.
 - Manage multiple documents, undo/redo, section order and visibility during the current tab session.
 
 ## Temporary session
@@ -29,10 +29,22 @@ It can:
 - Fill explicitly supplied name, role, skills, education, projects, location and email; ask a focused follow-up when facts are missing.
 - Draft a short profile from the supplied role and skills, organize existing text, deduplicate skill lists and propose a project case study. Text proposals require Apply; it never invents employers, qualifications or metrics.
 - Give contextual editorial feedback and recommend real templates, palettes and layouts with reasons.
+- Remove or replace quoted literal text across all content fields and custom sections in both languages, preserving contacts. Add/remove heading numbering consistently in HTML, PDF and Word; add named custom sections.
+- Apply compact formatting without deleting facts. The content form prioritizes name, role, email, profile, projects and skills; phone, location and photo are optional.
 - Apply templates, colors, paper format, fonts, editor theme, section visibility/order, navigation and language changes. Reversible document edits are grouped in undo history.
 - Open file/photo selection, prepare PDF/DOCX/HTML/JSON downloads and start local translation. Import contents and editor fields are treated as data, not task instructions.
 
+Supported editing commands run locally first, even when optional OpenAI is selected. All document edits can be undone. Translation quality still needs human review, especially specialized job titles.
+
 Examples in Portuguese:
+
+- `Remova "disponível imediatamente" de todas as seções`
+- `Substitua "Javascript" por "JavaScript" em todas as seções`
+- `Adicione índices` / `Remova os índices`
+- `Adicione uma seção "Publicações"`
+- `Deixe meu portfólio compacto e objetivo`
+- `Melhore a paleta para engenharia`
+
 
 ```text
 Crie um portfólio de desenvolvimento

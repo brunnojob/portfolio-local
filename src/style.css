@@ -45,3 +45,18 @@
 :root[data-theme="light"] .document-name input{background:transparent}
 
 .local-execution{display:block;margin:8px 0;color:#98c9ae;font-size:10px;line-height:1.6}:root[data-theme="light"] .local-execution{color:#245b3b}
+
+/* Compact workspace: let the document and task input take priority. */
+.welcome{padding-top:20px;padding-bottom:20px;min-height:0}
+.welcome h1{font-size:clamp(22px,2.2vw,32px);margin:6px 0}
+.welcome p{font-size:13px;margin:0}
+.welcome-note{display:none}
+.welcome .overline{font-size:9px}
+.panel-heading{margin-bottom:14px}
+.panel-heading h2{font-size:22px}
+.assistant-intro{padding:12px;margin-bottom:12px}
+.assistant-intro p{font-size:12px;line-height:1.5}
+.assistant-settings,.optional-details{border:1px solid var(--border);border-radius:8px;padding:10px;margin:10px 0}
+.assistant-settings>summary,.optional-details>summary{cursor:pointer;font-size:12px;font-weight:600}
+.optional-details .field:first-of-type{margin-top:12px}
+@media(max-width:700px){.welcome{padding:12px 16px}.welcome .overline,.welcome p{display:none}.welcome h1{font-size:22px}}
