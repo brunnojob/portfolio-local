@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {needsRefresh,importErrorMessage} from '../src/import-errors.js';
+test('outdated deployment asset errors offer recovery instead of a raw URL',()=>{for(const message of ['Failed to fetch dynamically imported module: https://example.org/assets/pdf-old.js','Importing a module script failed.','The API version "6.4" does not match the Worker version "6.3".']){assert.equal(needsRefresh(Error(message)),true);assert.match(importErrorMessage(Error(message),'pt'),/Recarregue/);assert.ok(!importErrorMessage(Error(message),'pt').includes('https://'));assert.match(importErrorMessage(Error(message),'en'),/Reload/);}});
+test('corrupt or password-protected documents are not mistaken for outdated deployments',()=>{assert.equal(needsRefresh(Error('Invalid PDF structure')),false);assert.match(importErrorMessage(Error('Invalid PDF structure'),'pt'),/Invalid PDF structure/);assert.equal(needsRefresh(Error('Password required')),false);});
