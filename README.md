@@ -16,6 +16,7 @@ A free, open source resume and portfolio editor that runs in the browser. No acc
 - Reorder and hide standard sections. Add up to ten custom sections. Undo and redo editing changes.
 - Optional photo, cropped and compressed locally.
 - Local field outlines and review suggestions for IT, offshore, engineering, business, healthcare, education, creative work, sales and general careers.
+- A guided assistant that checks the current document, prioritizes missing details, answers common portfolio questions in Portuguese or English and opens the relevant editor field. Questions and replies stay in the current browser tab. Its guidance is based on local rules, not a remote AI model.
 - Optional job-description keyword comparison. This is a literal local text check, not an ATS score or hiring prediction.
 
 ## Import
@@ -37,6 +38,8 @@ The storage dialog can request persistent storage from browsers that support it.
 ## What stays manual
 
 Portuguese and English text are edited independently. Changing language translates the interface and section labels, not user-written paragraphs. Suggestions use local rules and do not generate credentials or experience.
+
+Start in **Assistant** to follow the next steps or ask about a profile, project, experience, English version, template or job description. Its answers provide writing structure and editing shortcuts; they do not translate paragraphs, fact-check claims or generate a finished resume. After editing in one language, switch to the other and write or review that version before exporting it.
 
 Word uses the selected typography, color and layout structure, but its pagination depends on the Word processor. The browser preview is exact for the PDF, not for every Word application. PDF fonts support Portuguese and English; unsupported scripts and symbols may require a different export workflow.
 

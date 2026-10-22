@@ -27,4 +27,8 @@ export const palettes=[
  {name:'Azul noite',accent:'#203c68',ink:'#202c3d',background:'#ebf0f8'}
 ];
 export const getTemplate=id=>templates.find(t=>t.id===id)||templates[0];
+const englishNames={classic:'ATS Essential',executive:'Executive',sidebar:'Sidebar',horizon:'Horizon',technical:'Technical',timeline:'Career Timeline',academic:'Academic',compact:'Compact'};
+const englishPalettes={Lavanda:'Lavender',Oceano:'Ocean',Floresta:'Forest',Grafite:'Graphite',Terracota:'Terracotta',Borgonha:'Burgundy',Índigo:'Indigo',Petróleo:'Teal',Oliva:'Olive',Cobre:'Copper',Orquídea:'Orchid','Azul noite':'Midnight Blue'};
+export const templateName=(template,lang)=>lang==='en'?englishNames[template.id]||template.name:template.name;
+export const paletteName=(palette,lang)=>lang==='en'?englishPalettes[palette.name]||palette.name:palette.name;
 export function tint(hex,ratio=.92){const n=hex.replace('#','');return '#'+[0,2,4].map(i=>Math.round(parseInt(n.slice(i,i+2),16)*(1-ratio)+255*ratio).toString(16).padStart(2,'0')).join('');}
